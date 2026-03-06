@@ -1,0 +1,48 @@
+Architecture Notes – Room Booking System
+
+1. Preventing Overlapping Bookings
+
+The backend prevents overlapping bookings using a database query before creating a booking.
+When a booking request is made, the system checks if another booking exists for the same room where the date ranges overlap.
+
+Condition used:
+
+start_date < existing_end_date AND end_date > existing_start_date
+
+If any result is found, the booking request is rejected. This ensures that the same room cannot be booked for overlapping dates.
+
+2. Project Structure
+
+The project is separated into two main parts: frontend and backend.
+
+Frontend (React)
+Handles UI rendering, form handling, and API communication. Pages include login, registration, dashboard (room listing), and a "My Bookings" page.
+
+Backend (Node.js + Express)
+Handles authentication, booking logic, and database operations. The backend is structured using routes and controllers to keep the code organized and maintainable.
+
+Database (MySQL)
+Stores users, rooms, and bookings. Relationships between tables ensure bookings are linked to both users and rooms.
+
+3. Frontend and Backend Communication
+
+The frontend communicates with the backend through REST APIs using Axios.
+
+Example API flow:
+
+* User logs in → frontend sends credentials to backend
+* Backend verifies password and returns a JWT token
+* Frontend stores the token in localStorage
+* Future requests include user information to perform actions such as booking a room or viewing bookings
+
+4. Future Scaling
+
+If the system needed to scale, several improvements could be made:
+
+* Move database queries to a service layer for better separation of concerns
+* Introduce database transactions to ensure safe booking creation
+* Add caching for frequently requested room data
+* Implement role-based access (for example admin room management)
+* Use containerization (Docker) and deploy services separately
+
+The current structure keeps the system simple while still demonstrating full-stack integration and correct booking logic.
