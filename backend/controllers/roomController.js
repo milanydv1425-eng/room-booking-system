@@ -1,20 +1,23 @@
 import db from "../config/db.js";
 
-export const getRooms = (req, res) => {
+export const getRooms = async (req, res) => {
+  try {
 
-  const sql = "SELECT * FROM rooms";
+    const [rooms] = await db.query("SELECT * FROM rooms");
 
-  db.query(sql, (err, results) => {
-
-    if (err) {
-      return res.status(500).json({ message: "Error fetching rooms" });
-    }
-
-    res.json({
+    res.status(200).json({
       success: true,
-      rooms: results
+      rooms: rooms
     });
 
-  });
+  } catch (error) {
 
+    console.error("Room Fetch Error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Error fetching rooms"
+    });
+
+  }
 };

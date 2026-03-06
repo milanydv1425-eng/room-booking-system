@@ -1,8 +1,7 @@
 import db from "../config/db.js";
 
 /* CREATE BOOKING */
-export const createBooking = (req, res) => {
-
+export const createBooking = async (req, res) => {
   const { user_id, room_id, start_date, end_date } = req.body;
 
   const today = new Date().toISOString().split("T")[0];
@@ -21,99 +20,112 @@ export const createBooking = (req, res) => {
     });
   }
 
-  const checkQuery = `
-    SELECT * FROM bookings
-    WHERE room_id = ?
-    AND start_date < ?
-    AND end_date > ?
-  `;
+  try {
 
-  db.query(checkQuery, [room_id, end_date, start_date], (err, results) => {
+    const [existingBookings] = await db.query(
+      `SELECT * FROM bookings
+       WHERE room_id = ?
+       AND start_date < ?
+       AND end_date > ?`,
+      [room_id, end_date, start_date]
+    );
 
-    if (err) {
-      return res.status(500).json({ success: false, message: "Database error" });
-    }
-
-    if (results.length > 0) {
+    if (existingBookings.length > 0) {
       return res.status(400).json({
         success: false,
         message: "Room already booked for these dates"
       });
     }
 
-    const insertQuery = `
-      INSERT INTO bookings (user_id, room_id, start_date, end_date)
-      VALUES (?, ?, ?, ?)
-    `;
+    await db.query(
+      `INSERT INTO bookings (user_id, room_id, start_date, end_date)
+       VALUES (?, ?, ?, ?)`,
+      [user_id, room_id, start_date, end_date]
+    );
 
-    db.query(insertQuery, [user_id, room_id, start_date, end_date], (err) => {
-
-      if (err) {
-        return res.status(500).json({ success: false, message: "Booking failed" });
-      }
-
-      res.status(201).json({
-        success: true,
-        message: "Room booked successfully"
-      });
-
+    res.status(201).json({
+      success: true,
+      message: "Room booked successfully"
     });
 
-  });
+  } catch (error) {
 
+    console.error("Create Booking Error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Booking failed"
+    });
+
+  }
 };
 
 
 /* GET MY BOOKINGS */
-export const getMyBookings = (req, res) => {
+export const getMyBookings = async (req, res) => {
 
   const userId = req.params.userId;
 
-  const sql = `
-    SELECT bookings.*, rooms.name, rooms.price_per_night
-    FROM bookings
-    JOIN rooms ON bookings.room_id = rooms.id
-    WHERE bookings.user_id = ?
-  `;
+  try {
 
-  db.query(sql, [userId], (err, results) => {
+    const [bookings] = await db.query(
+      `SELECT bookings.*, rooms.room_number, rooms.type, rooms.price
+       FROM bookings
+       JOIN rooms ON bookings.room_id = rooms.id
+       WHERE bookings.user_id = ?`,
+      [userId]
+    );
 
-    if (err) {
-      return res.status(500).json({
+    res.json({
+      success: true,
+      bookings
+    });
+
+  } catch (error) {
+
+    console.error("Fetch Booking Error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Error fetching bookings"
+    });
+
+  }
+};
+
+
+/* CANCEL BOOKING */
+export const cancelBooking = async (req, res) => {
+
+  const { id } = req.params;
+
+  try {
+
+    const [result] = await db.query(
+      "DELETE FROM bookings WHERE id = ?",
+      [id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
         success: false,
-        message: "Error fetching bookings"
+        message: "Booking not found"
       });
     }
 
     res.json({
       success: true,
-      bookings: results
+      message: "Booking cancelled successfully"
     });
 
-  });
+  } catch (error) {
 
-};
+    console.error("Cancel Booking Error:", error);
 
+    res.status(500).json({
+      success: false,
+      message: "Failed to cancel booking"
+    });
 
-/* CANCEL BOOKING */
-export const cancelBooking = (req, res) => {
-
-  const { id } = req.params;
-
-  const sql = "DELETE FROM bookings WHERE id = ?";
-
-  db.query(sql, [id], (err, result) => {
-
-    if (err) {
-      return res.status(500).json({ success: false, message: "Failed to cancel booking" });
-    }
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ success: false, message: "Booking not found" });
-    }
-
-    res.json({ success: true, message: "Booking cancelled successfully" });
-
-  });
-
+  }
 };
