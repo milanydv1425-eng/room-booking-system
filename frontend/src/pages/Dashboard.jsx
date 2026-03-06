@@ -30,7 +30,9 @@ function Dashboard() {
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/rooms`);
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_URL}/api/rooms`,
+        );
         setRooms(res.data.rooms);
       } catch (error) {
         console.error(error.response?.data?.message || "Error fetching rooms");
@@ -221,10 +223,11 @@ function Dashboard() {
                       className="text-stone-100 font-bold text-lg"
                       style={{ fontFamily: "'Georgia', serif" }}
                     >
-                      {room.name}
+                      Room {room.room_number}
                     </h3>
+
                     <p className="text-amber-400 font-black text-xl mt-1">
-                      ₹{room.price_per_night}
+                      ₹{room.price}
                       <span className="text-stone-500 text-xs font-normal ml-1">
                         / night
                       </span>
