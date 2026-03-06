@@ -24,8 +24,8 @@ export const createBooking = async (req, res) => {
     const [existingBookings] = await db.query(
       `SELECT * FROM bookings
        WHERE room_id = ?
-       AND start_date < ?
-       AND end_date > ?`,
+       AND check_in < ?
+       AND check_out > ?`,
       [room_id, end_date, start_date],
     );
 
@@ -37,7 +37,7 @@ export const createBooking = async (req, res) => {
     }
 
     await db.query(
-      `INSERT INTO bookings (user_id, room_id, start_date, end_date)
+      `INSERT INTO bookings (user_id, room_id, check_in, check_out)
        VALUES (?, ?, ?, ?)`,
       [user_id, room_id, start_date, end_date],
     );
